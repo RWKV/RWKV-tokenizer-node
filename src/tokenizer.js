@@ -9,6 +9,9 @@ const unicodeToBytes = require("./unicodeToByte")
 // Get the tokenizer config JSON
 const tokenizerConfig = require("../20B_tokenizer.json")
 
+// Get the TextEncoder and TextDecoder
+const { TextEncoder, TextDecoder } = require('util');
+
 //----------------------------------
 // Vocab building
 //----------------------------------
@@ -50,13 +53,25 @@ function encode(s) {
 	// Normalize input string
 	s = s.normalize(tokenizerConfig.normalizer.type);
 	
-	// Convert input string to tokens
-	const s_tokens = Array.from(s, (c) => vocab[byteToUnicode[c.charCodeAt(0)]]);
-	
-	for (const addedTokenId in addedTokens) {
-		const addedToken_tokens = Array.from(addedTokens[addedTokenId], (c) => vocab[byteToUnicode[c.charCodeAt(0)]]);
-		replaceSubsequence(s_tokens, addedToken_tokens, [parseInt(addedTokenId)]);
+	// Handle surrogate pair conversion separately
+	function convertCodePointToTokens(codePoint) {
+        const bytes = (new TextEncoder()).encode(String.fromCodePoint(codePoint));
+        const tokens = bytes.map((byte) => vocab[String.fromCharCode(byte)]);
+        return tokens;
 	}
+	
+	// Convert input string to tokens
+	const s_tokens = Array.from(s, (c) => {
+		// Check if c is a surrogate pair
+		const codePoint = c.codePointAt(0);
+		if (codePoint > 0xFFFF) {
+			const highSurrogate = ((codePoint - 0x10000) >> 10) + 0xD800;
+			const lowSurrogate = ((codePoint - 0x10000) % 0x400) + 0xDC00;
+			return [convertCodePointToTokens(highSurrogate), convertCodePointToTokens(lowSurrogate)];
+		} else {
+			return convertCodePointToTokens(codePoint);
+		}
+	}).flat();
 	
 	let tokenCount = s_tokens.length;
 	
@@ -79,6 +94,36 @@ function encode(s) {
 			}
 		}
 	}
+	
+	// function apply_merges(tokens) {
+	// 	let tokenChanged = false;
+	// 	for (const merge of merges) {
+	// 		const space = merge.indexOf(' ');
+	
+	// 		if (space === -1) {
+	// 			throw new Error('Invalid merge string');
+	// 		}
+	
+	// 		const token_a = vocab[merge.substring(0, space)];
+	// 		const token_b = vocab[merge.substring(space + 1)];
+	// 		const token_merged = vocab[merge.replace(' ', '')];
+	
+	// 		for (let i = 0; i < tokens.length - 1; i++) {
+	// 			if (i + 1 < tokens.length && tokens[i] === token_a && tokens[i + 1] === token_b) {
+	// 				tokens[i] = token_merged;
+	// 				tokens.splice(i + 1, 1);
+	// 				tokenChanged = true;
+	// 			}
+	// 		}
+	// 	}
+	
+	// 	// If a token changed in the previous loop, try applying the merges again
+	// 	if (tokenChanged) {
+	// 		apply_merges(tokens);
+	// 	}
+	// }
+	
+	// apply_merges(s_tokens);
 	
 	return s_tokens.slice(0, tokenCount);
 }
