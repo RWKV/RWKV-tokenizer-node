@@ -9,27 +9,32 @@ const unicodeToBytes = require("./unicodeToByte")
 // Get the tokenizer config JSON
 const tokenizerConfig = require("../20B_tokenizer.json")
 
-// Get the TextEncoder and TextDecoder
-const { TextEncoder, TextDecoder } = require('util');
-
 //----------------------------------
 // Vocab building
 //----------------------------------
 
-// Get the vocab and merges from the tokenizer config
+// Get the vocab, merges, and special 'addeed tokens' from the tokenizer config
 const vocab = tokenizerConfig['model']['vocab'];
 const merges = tokenizerConfig['model']['merges'];
 const addedTokens = {};
 for (const token of tokenizerConfig['added_tokens']) {
-	addedTokens[token['id']] = token['content'];
+	addedTokens[parseInt(token['id'])] = token['content'];
 }
+
+// Ensure the added tokens are in the vocab
 for (const addedTokenId in addedTokens) {
-	const encoded_added_token = Array.from(addedTokens[addedTokenId], (c) => byteToUnicode[c.charCodeAt(0)]).join('');
-	vocab[encoded_added_token] = addedTokenId;
+	const encodedAddedToken = Buffer.from(addedTokens[addedTokenId], 'utf-8')
+	.reduce((result, byte) => {
+		result.push(byteToUnicode[byte]);
+		return result;
+	}, []).toString('utf-8');
+	vocab[encodedAddedToken] = addedTokenId;
 }
+
+// And the reverse vocab
 const vocabReversed = {};
 for (const token in vocab) {
-	vocabReversed[vocab[token]] = token;
+	vocabReversed[parseInt(vocab[token])] = token;
 }
 
 //----------------------------------
@@ -38,10 +43,55 @@ for (const token in vocab) {
 
 function replaceSubsequence(lst, a, b) {
 	for (let i = 0; i < lst.length; i++) {
-		if (lst.slice(i, i + a.length).join() === a.join()) {
+		if (lst.slice(i, i + a.length).join('') === a.join('')) {
 			lst.splice(i, a.length, ...b);
 		}
 	}
+}
+
+function splitWords(s) {
+	const result = [];
+	const pattern = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
+	for (const match of s.matchAll(pattern)) {
+		result.push(match[0]);
+	}
+	return result;
+}
+
+function encodeAddedTokens(s) {
+	const result = [];
+	
+	let remainder = s;
+	
+	while (remainder.length > 0) {
+		let nearestPos = remainder.length;
+		let nearestToken = -1;
+		
+		for (const addedTokenId in addedTokens) {
+			const pos = remainder.indexOf(addedTokens[addedTokenId]);
+			
+			if (pos !== -1 && pos < nearestPos) {
+				nearestPos = pos;
+				console.log(addedTokenId);
+				nearestToken = parseInt(addedTokenId);
+			}
+		}
+		
+		if (nearestPos === remainder.length) {
+			result.push(remainder);
+			
+			break;
+		}
+		
+		if (nearestPos !== 0) {
+			result.push(remainder.slice(0, nearestPos));
+		}
+		
+		result.push(nearestToken);
+		remainder = remainder.slice(nearestPos + addedTokens[nearestToken].length);
+	}
+	
+	return result.flat();
 }
 
 //----------------------------------
@@ -53,79 +103,71 @@ function encode(s) {
 	// Normalize input string
 	s = s.normalize(tokenizerConfig.normalizer.type);
 	
-	// Handle surrogate pair conversion separately
-	function convertCodePointToTokens(codePoint) {
-        const bytes = (new TextEncoder()).encode(String.fromCodePoint(codePoint));
-        const tokens = bytes.map((byte) => vocab[String.fromCharCode(byte)]);
-        return tokens;
-	}
+	const result = [];
 	
-	// Convert input string to tokens
-	const s_tokens = Array.from(s, (c) => {
-		// Check if c is a surrogate pair
-		const codePoint = c.codePointAt(0);
-		if (codePoint > 0xFFFF) {
-			const highSurrogate = ((codePoint - 0x10000) >> 10) + 0xD800;
-			const lowSurrogate = ((codePoint - 0x10000) % 0x400) + 0xDC00;
-			return [convertCodePointToTokens(highSurrogate), convertCodePointToTokens(lowSurrogate)];
-		} else {
-			return convertCodePointToTokens(codePoint);
-		}
-	}).flat();
+	const encodedParts = encodeAddedTokens(s);
 	
-	let tokenCount = s_tokens.length;
-	
-	for (const merge of merges) {
-		const space = merge.indexOf(' ');
-		
-		if (space === -1) {
-			throw new Error('Invalid merge string');
-		}
-		
-		const token_a = vocab[merge.substring(0, space)];
-		const token_b = vocab[merge.substring(space + 1)];
-		const token_merged = vocab[merge.replace(' ', '')];
-		
-		for (let i = 0; i < s_tokens.length - 1; i++) {
-			if (i + 1 < s_tokens.length && s_tokens[i] === token_a && s_tokens[i + 1] === token_b) {
-				s_tokens[i] = token_merged;
-				s_tokens.splice(i + 1, 1);
-				tokenCount -= 1;
+	for (const part of encodedParts) {
+		if (typeof part === 'number') {
+			result.push(part);
+		} else if (typeof part === 'string') {
+			// Get the word tokens
+			const wordTokens = splitWords(part)
+
+			// Lets log special "Here come the tests:"
+			if( s.indexOf("Here come the tests:") > -1 ) {
+				console.log("!!!")
+				console.log("oriS:", s)
+				console.log("encodedParts:", encodedParts)
+				console.log("part:", part)
+				console.log("wordTokens:", wordTokens)
 			}
+
+			// Iterate each word
+			for (const word of wordTokens) {
+				let tokens = Buffer.from(word, 'utf-8')
+				.reduce((result, byte) => {
+					result.push(vocab[byteToUnicode[byte]]);
+					return result;
+				}, []);
+
+				for (const addedTokenId in addedTokens) {
+					const addedTokenTokens = Buffer.from(addedTokens[addedTokenId], 'utf-8')
+					.reduce((result, byte) => {
+						result.push(vocab[byteToUnicode[byte]]);
+						return result;
+					}, []);
+					replaceSubsequence(tokens, addedTokenTokens, [addedTokenId]);
+				}
+
+				for (const merge of merges) {
+					const space = merge.indexOf(' ');
+					
+					if (space === -1) {
+						throw new Error('Space not found in merge');
+					}
+					
+					const tokenA = vocab[merge.slice(0, space)];
+					const tokenB = vocab[merge.slice(space + 1)];
+					const tokenMerged = vocab[merge.slice(0, space) + merge.slice(space + 1)];
+					
+					for (let i = 0; i < tokens.length - 1; i++) {
+						if (tokens[i] === tokenA && tokens[i + 1] === tokenB) {
+							tokens[i] = tokenMerged;
+							tokens.splice(i + 1, 1);
+							// i--;
+						}
+					}
+				}
+
+				result.push(...tokens);
+			}
+		} else {
+			throw new Error(`Unknown part type ${typeof part} : ${part}`);
 		}
 	}
 	
-	// function apply_merges(tokens) {
-	// 	let tokenChanged = false;
-	// 	for (const merge of merges) {
-	// 		const space = merge.indexOf(' ');
-	
-	// 		if (space === -1) {
-	// 			throw new Error('Invalid merge string');
-	// 		}
-	
-	// 		const token_a = vocab[merge.substring(0, space)];
-	// 		const token_b = vocab[merge.substring(space + 1)];
-	// 		const token_merged = vocab[merge.replace(' ', '')];
-	
-	// 		for (let i = 0; i < tokens.length - 1; i++) {
-	// 			if (i + 1 < tokens.length && tokens[i] === token_a && tokens[i + 1] === token_b) {
-	// 				tokens[i] = token_merged;
-	// 				tokens.splice(i + 1, 1);
-	// 				tokenChanged = true;
-	// 			}
-	// 		}
-	// 	}
-	
-	// 	// If a token changed in the previous loop, try applying the merges again
-	// 	if (tokenChanged) {
-	// 		apply_merges(tokens);
-	// 	}
-	// }
-	
-	// apply_merges(s_tokens);
-	
-	return s_tokens.slice(0, tokenCount);
+	return result.flat();
 }
 
 // Converts a list of tokens to a string.
@@ -133,21 +175,20 @@ function decode(tokens) {
 	let result = [];
 	
 	for (const token of tokens) {
-		if (token in addedTokens) {
-			const addedToken = addedTokens[token];
-			const decodedPart = Array.from(addedToken, (c) => c.charCodeAt(0));
+		if(token in addedTokens) {
+			const tokenString = addedTokens[token];
+			const decodedPart = Array.from(tokenString, (c) => unicodeToBytes[c]);
 			result = result.concat(decodedPart);
-		} else if (token in vocabReversed) {
+		} else if(token in vocabReversed) {
 			const tokenString = vocabReversed[token];
 			const decodedPart = Array.from(tokenString, (c) => unicodeToBytes[c]);
 			result = result.concat(decodedPart);
 		} else {
-			console.log("result so far", result);
-			throw new Error(`Unknown token: ${token}`);
+			throw new Error(`Token ${token} not found in vocab`);
 		}
 	}
 	
-	return Buffer.from(result).toString('utf8');
+	return Buffer.from(result).toString('utf-8');
 }
 
 // //----------------------------------
