@@ -72,7 +72,6 @@ function encodeAddedTokens(s) {
 			
 			if (pos !== -1 && pos < nearestPos) {
 				nearestPos = pos;
-				console.log(addedTokenId);
 				nearestToken = parseInt(addedTokenId);
 			}
 		}
@@ -114,14 +113,14 @@ function encode(s) {
 			// Get the word tokens
 			const wordTokens = splitWords(part)
 
-			// Lets log special "Here come the tests:"
-			if( s.indexOf("Here come the tests:") > -1 ) {
-				console.log("!!!")
-				console.log("oriS:", s)
-				console.log("encodedParts:", encodedParts)
-				console.log("part:", part)
-				console.log("wordTokens:", wordTokens)
-			}
+			// // Lets log special "Here come the tests:"
+			// if( s.indexOf("Here come the tests:") > -1 ) {
+			// 	console.log("!!!")
+			// 	console.log("oriS:", s)
+			// 	console.log("encodedParts:", encodedParts)
+			// 	console.log("part:", part)
+			// 	console.log("wordTokens:", wordTokens)
+			// }
 
 			// Iterate each word
 			for (const word of wordTokens) {
@@ -177,7 +176,7 @@ function decode(tokens) {
 	for (const token of tokens) {
 		if(token in addedTokens) {
 			const tokenString = addedTokens[token];
-			const decodedPart = Array.from(tokenString, (c) => unicodeToBytes[c]);
+			const decodedPart = Array.from(tokenString, (c) => c.charCodeAt(0));
 			result = result.concat(decodedPart);
 		} else if(token in vocabReversed) {
 			const tokenString = vocabReversed[token];

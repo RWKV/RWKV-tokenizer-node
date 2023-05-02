@@ -77,66 +77,87 @@ describe("Testing sample of JAP characters", function() {
 	});
 });
 
-// Validate the UTF8 test string file
-describe("Testing the 'UTF8 stress test' test-string", function() {
+// Testing of UTF8 jap chars
+describe("Testing sample of whitespace characters", function() {
 	// Set large timeout
 	this.timeout(10 * 1000); // 10 seconds
 
-	// // Test decoding
-	// it("decode testing", function() {
-	// 	// Get the decoded str
-	// 	let decoded = tokenizer.decode(testStringTokens);
-		
-	// 	// Lets validate line bye line
-	// 	let decodedSplit = decoded.split("\n");
-	// 	let lines = testStringTxt.split("\n");
-		
-	// 	// Check number of lines
-	// 	assert.equal(decodedSplit.length, lines.length);
-
-	// 	// Check each line
-	// 	for (let i = 0; i < lines.length; i++) {
-	// 		if( decodedSplit[i] !== lines[i] ) {
-	// 			console.log(`validation failed on line ${i}`);
-	// 			console.log(`decodedSplit[i] : ${decodedSplit[i]}`);
-	// 			console.log(`lines[i]        : ${lines[i]}`);
-	// 		}
-
-	// 		// assert.equal(decodedSplit[i].normalize("NFC"), lines[i].normalize("NFC"), `validation failed on line ${i}`);
-	// 	}
-	// });
+	// The sample
+	const sample = '< LOTS OF SPACE >                                                                                                                              < YO >'.normalize("NFC");
 
 	// Test basic encoding & decoding
+	it("encode and decode", function() {
+		let tokens = tokenizer.encode(sample);
+		assert.ok(tokens.length > 0);
+
+		let decoded = tokenizer.decode(tokens);
+		assert.equal(decoded, sample);
+	});
+});
+
+// Validate the UTF8 test string file
+describe("Testing the 'UTF8 stress test' test-string", function() {
+	// Set large timeout
+	this.timeout(60 * 1000); // 60 seconds
+
+	// Test decoding
+	it("decode testing", function() {
+		// Get the decoded str
+		let decoded = tokenizer.decode(testStringTokens);
+		
+		// Lets validate line bye line
+		let decodedSplit = decoded.split("\n");
+		let lines = testStringTxt.split("\n");
+		
+		// Check number of lines
+		assert.equal(decodedSplit.length, lines.length);
+
+		// Check each line
+		for (let i = 0; i < lines.length; i++) {
+			if( decodedSplit[i].normalize("NFC") !== lines[i].normalize("NFC") ) {
+				console.log(`validation failed on line ${i}`);
+				console.log(`decodedSplit[i] : ${decodedSplit[i]}`);
+				console.log(`lines[i]        : ${lines[i]}`);
+			}
+
+			assert.equal(decodedSplit[i].normalize("NFC"), lines[i].normalize("NFC"), `validation failed on line ${i}`);
+		}
+	});
+
+	// Test full encoding & decoding
 	it("encode and decode (line by line)", function() {
 		let lines = testStringTxt.split("\n");
 		for (let i = 0; i < lines.length; i++) {
+			// Log as a form of progress??
+			console.log(`line    : ${lines[i]}`);
+
 			let tokens = tokenizer.encode(lines[i]+"\n");
 			assert.ok(tokens.length > 0, `Line ${i} encoding failed with : ${lines[i]}`);
 
 			let decoded = tokenizer.decode(tokens);
 
-			if( lines[i].indexOf("Here come the tests:") > -1 ) {
-				console.log(`validation failed on line ${i}`);
-				console.log(`line    : ${lines[i]}`);
-				console.log(`decoded : ${decoded}`);
-				console.log(`tokens  : ${tokens}`);
-			}
+			// if( lines[i].indexOf("Here come the tests:") > -1 ) {
+			// 	console.log(`validation failed on line ${i}`);
+			// 	console.log(`line    : ${lines[i]}`);
+			// 	console.log(`decoded : ${decoded}`);
+			// 	console.log(`tokens  : ${tokens}`);
+			// }
 
 			assert.equal(decoded, lines[i]+"\n", `Line ${i} decoding failed with : ${lines[i]}`);
 		}
 	});
 
-// 	// it("encode and decode", function() {
-// 	// 	let tokens = tokenizer.encode(testStringTxt);
-// 	// 	assert.ok(tokens.length > 0);
+	it("encode and decode (full)", function() {
+		let tokens = tokenizer.encode(testStringTxt);
+		assert.ok(tokens.length > 0);
 
-// 	// 	let decoded = tokenizer.decode(tokens);
-// 	// 	assert.equal(decoded, testStringTokens);
-// 	// });
+		let decoded = tokenizer.decode(tokens);
+		assert.equal(decoded, testStringTokens);
+	});
 	
-// 	// // Check encoding result
-// 	// it("encode result validation", function() {
-// 	// 	let tokens = tokenizer.encode(testStringTxt);
-// 	// 	assert.deepEqual(tokens, testStringTokens);
-// 	// });
+	// Check encoding result
+	it("encode result validation", function() {
+		let tokens = tokenizer.encode(testStringTxt);
+		assert.deepEqual(tokens, testStringTokens);
+	});
 });
