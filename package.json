@@ -1,0 +1,15 @@
+{
+  "name": "rwkv-tokenizer-node",
+  "version": "1.0.0",
+  "description": "RWKV tokenizer library, for nodejs",
+  "main": "tokenizer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "RWKV",
+    "Tokenizer"
+  ],
+  "author": "Eugene Cheah (@picocreator)",
+  "license": "MIT"
+}
