@@ -11,5 +11,12 @@
     "Tokenizer"
   ],
   "author": "Eugene Cheah (@picocreator)",
-  "license": "MIT"
+  "license": "MIT",
+	"dependencies": {
+	},
+	"devDependencies": {
+		"chai": "^4.3.7",
+		"chai-as-promised": "^7.1.1",
+		"mocha": "^10.2.0"
+	}
 }
