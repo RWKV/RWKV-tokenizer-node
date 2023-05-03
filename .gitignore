@@ -13,4 +13,5 @@ models/
 !.gitignore
 
 # Skip build files within the rust-binding folder
-rust-binding/target/
+rust-binding/
+rust-*/
