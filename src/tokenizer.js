@@ -20,6 +20,14 @@ const addedTokens = {};
 for (const token of tokenizerConfig['added_tokens']) {
 	addedTokens[parseInt(token['id'])] = token['content'];
 }
+const addedTokensTokensMap = {};
+for (const tokenID in addedTokens) {
+	addedTokensTokensMap[tokenID] = Buffer.from(addedTokens[tokenID], 'utf-8')
+	.reduce((result, byte) => {
+		result.push(vocab[byteToUnicode[byte]]);
+		return result;
+	}, []); 
+}
 
 // Ensure the added tokens are in the vocab
 for (const addedTokenId in addedTokens) {
@@ -41,11 +49,37 @@ for (const token in vocab) {
 // Utils
 //----------------------------------
 
+/**
+ * Replace all occurance of A subequence in the provided list with B.
+ * @param {Array<Int>} lst 
+ * @param {Array<Int>} a 
+ * @param {Array<Int>} b 
+ */
 function replaceSubsequence(lst, a, b) {
 	for (let i = 0; i < lst.length; i++) {
-		if (lst.slice(i, i + a.length).join('') === a.join('')) {
-			lst.splice(i, a.length, ...b);
+		// Last do an optimized fast fail 
+		// match for the first number
+		if (lst[i] !== a[0]) {
+			continue;
 		}
+
+		// Lets try to match the subsequence
+		// from 2nd number onwards
+		let matchFound = true;
+		for(let j = 0; j < a.length; j++) {
+			if (lst[i + j] !== a[j]) {
+				matchFound = false;
+				break;
+			}
+		}
+
+		// Skip if no match
+		if (!matchFound) {
+			continue;
+		}
+
+		// Replace the subsequence
+		lst.splice(i, a.length, ...b);
 	}
 }
 
@@ -113,15 +147,6 @@ function encode(s) {
 			// Get the word tokens
 			const wordTokens = splitWords(part)
 
-			// // Lets log special "Here come the tests:"
-			// if( s.indexOf("Here come the tests:") > -1 ) {
-			// 	console.log("!!!")
-			// 	console.log("oriS:", s)
-			// 	console.log("encodedParts:", encodedParts)
-			// 	console.log("part:", part)
-			// 	console.log("wordTokens:", wordTokens)
-			// }
-
 			// Iterate each word
 			for (const word of wordTokens) {
 				let tokens = Buffer.from(word, 'utf-8')
@@ -130,13 +155,8 @@ function encode(s) {
 					return result;
 				}, []);
 
-				for (const addedTokenId in addedTokens) {
-					const addedTokenTokens = Buffer.from(addedTokens[addedTokenId], 'utf-8')
-					.reduce((result, byte) => {
-						result.push(vocab[byteToUnicode[byte]]);
-						return result;
-					}, []);
-					replaceSubsequence(tokens, addedTokenTokens, [addedTokenId]);
+				for (const addedTokenId in addedTokensTokensMap) {
+					replaceSubsequence(tokens, addedTokensTokensMap[addedTokenId], [addedTokenId]);
 				}
 
 				for (const merge of merges) {
@@ -154,7 +174,7 @@ function encode(s) {
 						if (tokens[i] === tokenA && tokens[i + 1] === tokenB) {
 							tokens[i] = tokenMerged;
 							tokens.splice(i + 1, 1);
-							// i--;
+							i--;
 						}
 					}
 				}
@@ -189,13 +209,6 @@ function decode(tokens) {
 	
 	return Buffer.from(result).toString('utf-8');
 }
-
-// //----------------------------------
-// // Usage example
-// //----------------------------------
-// let input = "Hello world!";
-// let result = encode(input);
-// console.log(result);
 
 //----------------------------------
 // Module export
