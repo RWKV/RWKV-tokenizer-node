@@ -202,7 +202,11 @@ function encodeAddedTokens(s) {
 // Encode and decode functions
 //----------------------------------
 
-// Converts a string to a list of tokens.
+/**
+ * Given the input string, encode it into a list of token IDs.
+ * @param {String} s 
+ * @returns {Array<Int>} 
+ */
 function encode(s) {
 	// Normalize input string
 	s = s.normalize(tokenizerConfig.normalizer.type);
@@ -285,7 +289,11 @@ function encode(s) {
 	return result;
 }
 
-// Converts a list of tokens to a string.
+/**
+ * Given a list of token IDs, decode it into a string.
+ * @param {Array<Int>} tokens 
+ * @returns {String}
+ */
 function decode(tokens) {
 	let result = [];
 	
