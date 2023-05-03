@@ -22,6 +22,12 @@ const vocab = tokenizerConfig['model']['vocab'];
 // List of merges
 const merges = tokenizerConfig['model']['merges'];
 
+// Precompute the token unicode vocab values
+const byteToUnicodeVocab = [];
+for (const byte in byteToUnicode) {
+    byteToUnicodeVocab[parseInt(byte)] = vocab[byteToUnicode[byte]];
+}
+
 // Additional token mapping of token IDs to unicode values
 const addedTokens = {};
 for (const token of tokenizerConfig['added_tokens']) {
@@ -33,7 +39,7 @@ const addedTokensTokensMap = {};
 for (const tokenID in addedTokens) {
 	addedTokensTokensMap[tokenID] = Buffer.from(addedTokens[tokenID], 'utf-8')
 	.reduce((result, byte) => {
-		result.push(vocab[byteToUnicode[byte]]);
+		result.push(byteToUnicodeVocab[byte]);
 		return result;
 	}, []); 
 }
@@ -54,6 +60,13 @@ for (const content in vocab) {
 	vocabReversed[parseInt(vocab[content])] = content;
 }
 
+// // While "Faster", it produces different results from HF's tokenizer
+// // ---
+// // Map varient of the processed merges
+// const processedMergesMap = { 
+// 	// tokenA: { tokenB: tokenMerged }
+// };
+
 // Precompute the merges vocab token pairs (speed up the encoding)
 const processedMerges = merges.map((merge) => {
 	const space = merge.indexOf(' ');
@@ -63,6 +76,11 @@ const processedMerges = merges.map((merge) => {
 	const tokenA = vocab[merge.slice(0, space)];
 	const tokenB = vocab[merge.slice(space + 1)];
 	const tokenMerged = vocab[merge.replace(" ", "")];
+
+	// // Add to the processed merges map
+	// processedMergesMap[tokenA] = processedMergesMap[tokenA] || {};
+	// processedMergesMap[tokenA][tokenB] = tokenMerged;
+
 	return { tokenA, tokenB, tokenMerged };
 });
 
@@ -204,7 +222,7 @@ function encode(s) {
 			for (const word of wordTokens) {
 				let tokens = Buffer.from(word, 'utf-8')
 				.reduce((result, byte) => {
-					result.push(vocab[byteToUnicode[byte]]);
+					result.push(byteToUnicodeVocab[byte]);
 					return result;
 				}, []);
 
@@ -222,6 +240,24 @@ function encode(s) {
 						}
 					}
 				}
+
+				// While "Faster", it produces different results from HF's tokenizer
+				// ---
+				// for(let i = 0; i < tokens.length - 1; i++) {
+				// 	const tokenA = tokens[i];
+				// 	const tokenB = tokens[i + 1];
+
+				// 	if( processedMergesMap[tokenA] == null ) {
+				// 		continue;
+				// 	}
+
+				// 	const tokenMerged = processedMergesMap[tokenA][tokenB];
+				// 	if( tokenMerged ) {
+				// 		tokens[i] = tokenMerged;
+				// 		tokens.splice(i + 1, 1);
+				// 		i--;
+				// 	}
+				// }
 
 				result.push(...tokens);
 			}
