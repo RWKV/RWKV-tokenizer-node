@@ -34,3 +34,16 @@ with open("hello-world.json", "w") as f:
 
 with open("test-string.json", "w") as f:
     json.dump(testStringTokens, f)
+
+# Lets build a varient of testStringStr test, but is done line by line
+# and the lines are tokenized and encoded separately
+testStringLines = testStringStr.splitlines()
+
+# Tokenize and encode the lines seperately, and build an array of arrays
+testStringLinesTokens = []
+for line in testStringLines:
+    testStringLinesTokens.append(theTokenizer.encode(line))
+
+# Write the tokens to a JSON file
+with open("test-string-lines.json", "w") as f:
+    json.dump(testStringLinesTokens, f)

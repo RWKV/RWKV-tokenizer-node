@@ -26,6 +26,7 @@ const helloWorldTxt = fs.readFileSync(path.resolve(__dirname,"hello-world.txt"),
 const helloWorldTokens = JSON.parse(fs.readFileSync(path.resolve(__dirname,"hello-world.json"), "utf-8"));
 const testStringTxt = fs.readFileSync(path.resolve(__dirname,"test-string.txt"), "utf-8").normalize("NFC");
 const testStringTokens = JSON.parse(fs.readFileSync(path.resolve(__dirname,"test-string.json"), "utf-8"));
+const testStringTokensLines = JSON.parse(fs.readFileSync(path.resolve(__dirname,"test-string-lines.json"), "utf-8"));
 
 //-----------------------------------------------------------
 // And perform the unit tests
@@ -127,22 +128,42 @@ describe("Testing the 'UTF8 stress test' test-string", function() {
 	it("encode and decode (line by line)", function() {
 		let lines = testStringTxt.split("\n");
 		for (let i = 0; i < lines.length; i++) {
-			// Log as a form of progress??
-			console.log(`line    : ${lines[i]}`);
-
+			// Get the encoded tokens
 			let tokens = tokenizer.encode(lines[i]+"\n");
 			assert.ok(tokens.length > 0, `Line ${i} encoding failed with : ${lines[i]}`);
 
+			// Decode it back
 			let decoded = tokenizer.decode(tokens);
 
-			// if( lines[i].indexOf("Here come the tests:") > -1 ) {
-			// 	console.log(`validation failed on line ${i}`);
-			// 	console.log(`line    : ${lines[i]}`);
-			// 	console.log(`decoded : ${decoded}`);
-			// 	console.log(`tokens  : ${tokens}`);
-			// }
+			// Log if it failed
+			if( lines[i]+"\n" !== decoded ) {
+				console.log(`validation failed on line ${i}`);
+				console.log(`line    : ${lines[i]}`);
+				console.log(`decoded : ${decoded}`);
+				console.log(`tokens  : ${tokens}`);
+			}
 
+			// Assert accordingly
 			assert.equal(decoded, lines[i]+"\n", `Line ${i} decoding failed with : ${lines[i]}`);
+		}
+	});
+
+	// Encode and validate line by line
+	it("encode and validate (line by line)", function() {
+		let lines = testStringTxt.split("\n");
+		for (let i = 0; i < lines.length; i++) {
+			// Skip empty lines
+			if( lines[i] === "" ) continue;
+			
+			// Get the encoded tokens
+			let tokens = tokenizer.encode(lines[i]);
+			assert.ok(tokens.length > 0, `Line ${i} encoding failed with : ${lines[i]}`);
+
+			// Get the reference tokens
+			let refTokens = testStringTokensLines[i];
+
+			// And validate
+			assert.deepEqual(tokens, refTokens, `Line ${i} decoding failed with : ${lines[i]}`);
 		}
 	});
 
@@ -161,7 +182,7 @@ describe("Testing the 'UTF8 stress test' test-string", function() {
 	// while the encoding is 19,341 tokens
 	//
 	// This is despite passing the line by line test
-	it("encode result validation", function() {
+	it("encode and validate", function() {
 		let tokens = tokenizer.encode(testStringTxt);
 		// assert.deepEqual(tokens, testStringTokens);
 		for(let i=0; i<testStringTokens.length; i++) {
