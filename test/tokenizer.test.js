@@ -155,6 +155,12 @@ describe("Testing the 'UTF8 stress test' test-string", function() {
 	});
 	
 	// Check encoding result
+	// This currently fails for some reason?
+	//
+	// Expected result is 19,339 tokens
+	// while the encoding is 19,341 tokens
+	//
+	// This is despite passing the line by line test
 	it("encode result validation", function() {
 		let tokens = tokenizer.encode(testStringTxt);
 		assert.deepEqual(tokens, testStringTokens);
