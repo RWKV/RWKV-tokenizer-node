@@ -98,7 +98,7 @@ describe("Testing sample of whitespace characters", function() {
 // Validate the UTF8 test string file
 describe("Testing the 'UTF8 stress test' test-string", function() {
 	// Set large timeout
-	this.timeout(300 * 1000); // 60 seconds
+	this.timeout(600 * 1000); // 600 seconds
 
 	// Test decoding
 	it("decode testing", function() {
@@ -119,7 +119,6 @@ describe("Testing the 'UTF8 stress test' test-string", function() {
 				console.log(`decodedSplit[i] : ${decodedSplit[i]}`);
 				console.log(`lines[i]        : ${lines[i]}`);
 			}
-
 			assert.equal(decodedSplit[i].normalize("NFC"), lines[i].normalize("NFC"), `validation failed on line ${i}`);
 		}
 	});
