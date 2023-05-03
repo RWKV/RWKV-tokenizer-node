@@ -42,3 +42,15 @@ npm run test
 ```
 
 The python script used to seed the refence data (using huggingface tokenizer) is found at [test/build-test-token-json.py](./test/build-test-token-json.py)
+
+# Special thanks & refrences
+
+@saharNooby - which the current implementation is heavily based on
+
+https://gist.github.com/saharNooby/bb54519a7d3735afb6949825608c00f0
+
+@cztomsik @josephrocca @BlinkDL - for their various implementation, which is used as refence to squash out mismatching encoding with HF implementation.
+
+https://github.com/cztomsik/ggml-js/blob/main/lib/tokenizers/bpe-tokenizer.js
+https://github.com/josephrocca/rwkv-v4-web
+https://github.com/BlinkDL/ChatRWKV/blob/main/tokenizer/rwkv_tokenizer.py
