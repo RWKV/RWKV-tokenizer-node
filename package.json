@@ -2,7 +2,7 @@
   "name": "rwkv-tokenizer-node",
   "version": "1.0.0",
   "description": "RWKV tokenizer library, for nodejs",
-  "main": "tokenizer.js",
+  "main": "src/tokenizer.js",
   "scripts": {
     "test": "mocha \"./test/**/*.test.js\" --exit --trace-warnings"
   },
