@@ -1,6 +1,8 @@
 # Native Node.js tokenizer for RWKV
 
-0 dependency tokenizer for the RWKV project
+0 dependency tokenizer for the [RWKV project](https://github.com/BlinkDL/RWKV-LM)
+
+Should also work for EleutherAI [neox](https://github.com/EleutherAI/gpt-neox) and [pythia](https://github.com/EleutherAI/pythia), as they use the same tokenizer
 
 # Setup 
 
@@ -19,6 +21,9 @@ const tokens = tokenizer.encode("Hello World!");
 // Decode back to "Hello World!"
 const deocded = tokenizer.decode(tokens);
 ```
+
+Its primary purpose is for use in implementing RWKV-cpp-node , 
+though it could probably be used for other use cases.
 
 # Things to do
 
