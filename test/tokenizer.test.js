@@ -151,7 +151,7 @@ describe("Testing the 'UTF8 stress test' test-string", function() {
 		assert.ok(tokens.length > 0);
 
 		let decoded = tokenizer.decode(tokens);
-		assert.equal(decoded, testStringTokens);
+		assert.equal(decoded, testStringTxt);
 	});
 	
 	// Check encoding result
