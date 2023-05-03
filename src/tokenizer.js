@@ -14,12 +14,21 @@ const tokenizerConfig = require("../20B_tokenizer.json")
 //----------------------------------
 
 // Get the vocab, merges, and special 'addeed tokens' from the tokenizer config
+// ---
+
+// Map of unicode valeus to token IDs
 const vocab = tokenizerConfig['model']['vocab'];
+
+// List of merges
 const merges = tokenizerConfig['model']['merges'];
+
+// Additional token mapping of token IDs to unicode values
 const addedTokens = {};
 for (const token of tokenizerConfig['added_tokens']) {
 	addedTokens[parseInt(token['id'])] = token['content'];
 }
+
+// Process the added tokens to their vocab representation
 const addedTokensTokensMap = {};
 for (const tokenID in addedTokens) {
 	addedTokensTokensMap[tokenID] = Buffer.from(addedTokens[tokenID], 'utf-8')
@@ -44,6 +53,18 @@ const vocabReversed = {};
 for (const token in vocab) {
 	vocabReversed[parseInt(vocab[token])] = token;
 }
+
+// Precompute the merges vocab token pairs (speed up the encoding)
+const processedMerges = merges.map((merge) => {
+	const space = merge.indexOf(' ');
+	if (space === -1) {
+		throw new Error("Space not found in merge");
+	}
+	const tokenA = vocab[merge.slice(0, space)];
+	const tokenB = vocab[merge.slice(space + 1)];
+	const tokenMerged = vocab[merge.replace(" ", "")];
+	return { tokenA, tokenB, tokenMerged };
+});
 
 //----------------------------------
 // Utils
@@ -83,10 +104,10 @@ function replaceSubsequence(lst, a, b) {
 	}
 }
 
+const splitwords_pattern = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
 function splitWords(s) {
 	const result = [];
-	const pattern = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
-	for (const match of s.matchAll(pattern)) {
+	for (const match of s.matchAll(splitwords_pattern)) {
 		result.push(match[0]);
 	}
 	return result;
@@ -159,16 +180,8 @@ function encode(s) {
 					replaceSubsequence(tokens, addedTokensTokensMap[addedTokenId], [addedTokenId]);
 				}
 
-				for (const merge of merges) {
-					const space = merge.indexOf(' ');
-					
-					if (space === -1) {
-						throw new Error('Space not found in merge');
-					}
-					
-					const tokenA = vocab[merge.slice(0, space)];
-					const tokenB = vocab[merge.slice(space + 1)];
-					const tokenMerged = vocab[merge.slice(0, space) + merge.slice(space + 1)];
+				for (const mergeObj of processedMerges) {
+					const { tokenA, tokenB, tokenMerged } = mergeObj;
 					
 					for (let i = 0; i < tokens.length - 1; i++) {
 						if (tokens[i] === tokenA && tokens[i + 1] === tokenB) {

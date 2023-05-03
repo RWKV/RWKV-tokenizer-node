@@ -163,6 +163,10 @@ describe("Testing the 'UTF8 stress test' test-string", function() {
 	// This is despite passing the line by line test
 	it("encode result validation", function() {
 		let tokens = tokenizer.encode(testStringTxt);
+		// assert.deepEqual(tokens, testStringTokens);
+		for(let i=0; i<testStringTokens.length; i++) {
+			assert.equal(tokens[i], testStringTokens[i], `Token ${i} failed, expected ${testStringTokens[i]} but got ${tokens[i]}}`);
+		}
 		assert.deepEqual(tokens, testStringTokens);
 	});
 });
