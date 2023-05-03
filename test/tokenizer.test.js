@@ -151,10 +151,16 @@ describe("Testing the 'UTF8 stress test' test-string", function() {
 	// Encode and validate line by line
 	it("encode and validate (line by line)", function() {
 		let lines = testStringTxt.split("\n");
+
+		//
+		// The following are known tricky lines
+		// Line 531 - Sanskrit: काचं शक्नोम्यत्तुम् । नोपहिनस्ति माम् ॥
+		// Line 698 - Nepali: म काँच खान सक्छू र मलाई केहि नी हुन्‍न् ।
+		//
 		for (let i = 0; i < lines.length; i++) {
 			// Skip empty lines
 			if( lines[i] === "" ) continue;
-			
+
 			// Get the encoded tokens
 			let tokens = tokenizer.encode(lines[i]);
 			assert.ok(tokens.length > 0, `Line ${i} encoding failed with : ${lines[i]}`);

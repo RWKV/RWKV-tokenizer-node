@@ -16,7 +16,7 @@ const tokenizerConfig = require("../20B_tokenizer.json")
 // Get the vocab, merges, and special 'addeed tokens' from the tokenizer config
 // ---
 
-// Map of unicode valeus to token IDs
+// Map of unicode values to token IDs
 const vocab = tokenizerConfig['model']['vocab'];
 
 // List of merges
@@ -50,8 +50,8 @@ for (const addedTokenId in addedTokens) {
 
 // And the reverse vocab
 const vocabReversed = {};
-for (const token in vocab) {
-	vocabReversed[parseInt(vocab[token])] = token;
+for (const content in vocab) {
+	vocabReversed[parseInt(vocab[content])] = content;
 }
 
 // Precompute the merges vocab token pairs (speed up the encoding)
@@ -65,6 +65,38 @@ const processedMerges = merges.map((merge) => {
 	const tokenMerged = vocab[merge.replace(" ", "")];
 	return { tokenA, tokenB, tokenMerged };
 });
+
+// \u0120 special merging (tokenID: 209)
+// For some reason (i dunno), the hugging face tokenizer merges \u0120 with the next token more aggressively then expected
+// So we need to do a special vocab mapping for this
+const u0120Merges = {
+	// 41497: 35762
+};
+
+// Find all the vocab tokens that start with \u0120
+for (const content in vocab) {
+	// Skip anything that does not start with \u0120
+	if( content.charCodeAt(0) != 0x0120 ) {
+		continue;
+	}
+
+	// Get the rest of the token content after \u0120
+	const rest = content.slice(1);
+
+	// Skip if the rest is empty
+	if (rest.length === 0) {
+		continue;
+	}
+
+	// Get a matching token ID for the rest of the token (if found)
+	const restTokenID = vocab[rest];
+	if( restTokenID === undefined ) {
+		continue;
+	}
+
+	// Lets add it to the u0120Merges
+	u0120Merges[restTokenID] = vocab[content];
+}
 
 //----------------------------------
 // Utils
@@ -157,7 +189,7 @@ function encode(s) {
 	// Normalize input string
 	s = s.normalize(tokenizerConfig.normalizer.type);
 	
-	const result = [];
+	let result = [];
 	
 	const encodedParts = encodeAddedTokens(s);
 	
@@ -182,7 +214,6 @@ function encode(s) {
 
 				for (const mergeObj of processedMerges) {
 					const { tokenA, tokenB, tokenMerged } = mergeObj;
-					
 					for (let i = 0; i < tokens.length - 1; i++) {
 						if (tokens[i] === tokenA && tokens[i + 1] === tokenB) {
 							tokens[i] = tokenMerged;
@@ -199,7 +230,23 @@ function encode(s) {
 		}
 	}
 	
-	return result.flat();
+	result = result.flat();
+
+	// Lets handle u0120 special merging
+	// this kinda feels hacky, if someone knows a better way please let me know
+	for(let i = 0; i < result.length - 1; i++) {
+		if( result[i] == 209 ) {
+			const nextToken = result[i + 1];
+			if( u0120Merges[nextToken] ) {
+				result[i] = u0120Merges[nextToken];
+				result.splice(i + 1, 1);
+				i--;
+			}
+		}
+	}
+
+	// Return after joining the tokens
+	return result;
 }
 
 // Converts a list of tokens to a string.
