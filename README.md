@@ -2,17 +2,17 @@
 
 0 dependency tokenizer for the [RWKV project](https://github.com/BlinkDL/RWKV-LM)
 
-Should also work for EleutherAI [neox](https://github.com/EleutherAI/gpt-neox) and [pythia](https://github.com/EleutherAI/pythia), as they use the same tokenizer
+Should also work for [EleutherAI neox](https://github.com/EleutherAI/gpt-neox) and [pythia](https://github.com/EleutherAI/pythia), as they use the same tokenizer
 
 # Setup 
 
-```
-npm install https://github.com/PicoCreator/RWKV-tokenizer-node.git
+```.bash
+npm i rwkv-tokenizer-node
 ```
 
 # Usage
 
-```
+```.javascript
 const tokenizer = require("RWKV-tokenizer-node");
 
 // Encode into token int : [12092, 3645, 2]
@@ -25,28 +25,22 @@ const deocded = tokenizer.decode(tokens);
 Its primary purpose is for use in implementing RWKV-cpp-node , 
 though it could probably be used for other use cases.
 
-# Things to do
-
-- [ ] NPM repo publishing
-- [ ] Add sampling given the logit state (for inference with RWKV.cpp)
-
 # What can be improved?
 
-**performance** - its kinda disappointing that this is easily 10x slower then the python implementation (which i believe is using the rust library)
+- performance: its kinda disappointing that this is easily 10x slower then the python implementation (which i believe is using the rust library), however this is generally still good enough for most usecases
+- Why not use the hugging face library? Sadly the official huggingface tokenizer lib for nodejs is broken : https://github.com/huggingface/tokenizers/issues/911
 
-However because the official huggingface tokenizer lib for nodejs is broken : https://github.com/huggingface/tokenizers/issues/911
-This is the best I can do for now =|
-
-Anyone who has any ideas on how to improve its performance, while not failing the test suite, is welcomed to do so.
+PS: Anyone who has any ideas on how to improve its performance, while not failing the test suite, is welcomed to do so.
 
 # How to run the test?
 
-```
+```.bash
 # This run the sole test file test/tokenizer.test.js
 npm run test
 ```
 
 The python script used to seed the refence data (using huggingface tokenizer) is found at [test/build-test-token-json.py](./test/build-test-token-json.py)
+This test includes a very extensive UTF-8 test file covering all major (and many minor) languages
 
 # Special thanks & refrences
 

@@ -1,7 +1,7 @@
 {
   "name": "rwkv-tokenizer-node",
-  "version": "1.0.1",
-  "description": "RWKV / NeoX / Pythia zero-dep tokenizer library, for nodejs",
+  "version": "1.0.2",
+  "description": "RWKV / gpt-NeoX / Pythia, 0-dep tokenizer library, for nodejs",
   "main": "src/tokenizer.js",
   "scripts": {
     "test": "mocha \"./test/**/*.test.js\" --exit --trace-warnings"
