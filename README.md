@@ -19,7 +19,7 @@ const tokenizer = require("RWKV-tokenizer-node");
 const tokens = tokenizer.encode("Hello World!");
 
 // Decode back to "Hello World!"
-const deocded = tokenizer.decode(tokens);
+const decoded = tokenizer.decode(tokens);
 ```
 
 Its primary purpose is for use in implementing RWKV-cpp-node , 
