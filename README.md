@@ -22,8 +22,8 @@ const tokens = tokenizer.encode("Hello World!");
 const decoded = tokenizer.decode(tokens);
 ```
 
-Its primary purpose is for use in implementing RWKV-cpp-node , 
-though it could probably be used for other use cases.
+Its primary purpose is for use in implementing [RWKV-cpp-node](https://github.com/PicoCreator/RWKV-cpp-node) , 
+though it could probably be used for other use cases (eg. pure-JS implementaiton of gpt-neox or RWKV)
 
 # What can be improved?
 

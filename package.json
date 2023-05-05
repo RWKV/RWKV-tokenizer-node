@@ -1,6 +1,6 @@
 {
   "name": "rwkv-tokenizer-node",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "RWKV / gpt-NeoX / Pythia, 0-dep tokenizer library, for nodejs",
   "main": "src/tokenizer.js",
   "scripts": {
