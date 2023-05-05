@@ -42,6 +42,10 @@ npm run test
 The python script used to seed the refence data (using huggingface tokenizer) is found at [test/build-test-token-json.py](./test/build-test-token-json.py)
 This test includes a very extensive UTF-8 test file covering all major (and many minor) languages
 
+# Designated maintainer
+
+[@picocreator](https://github.com/PicoCreator) - is the current maintainer of the project, ping him on the RWKV discord if you have any questions on this project
+
 # Special thanks & refrences
 
 @saharNooby - which the current implementation is heavily based on
