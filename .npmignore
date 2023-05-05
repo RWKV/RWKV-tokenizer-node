@@ -1,0 +1,8 @@
+# Ignore common hidden files
+.*
+
+# Ignore node_modules, test folder, and rust expriment files
+node_modules/
+test/
+target/
+rust-binding-ref/

@@ -11,6 +11,7 @@ models/
 
 # Include back gitignore
 !.gitignore
+!.npmignore
 
 # Skip build files within the rust-binding folder
 rust-binding/
