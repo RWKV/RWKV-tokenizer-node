@@ -16,3 +16,4 @@ models/
 # Skip build files within the rust-binding folder
 rust-binding/
 rust-*/
+rwkv_tokenizer.py
